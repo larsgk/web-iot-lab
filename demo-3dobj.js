@@ -16,20 +16,20 @@ export class Demo3DObj extends HTMLElement {
         .scene {
             width: 200px;
             height: 200px;
-            margin: 200px;
             perspective: 500px;
         }
 
         .obj {
             width: 200px;
             height: 200px;
-            position: relative;
+            position: absolute;
             transform-style: preserve-3d;
             transform: translateZ(-1000px);
             transition: transform 100ms;
         }
 
         .plane {
+            box-sizing: border-box;
             position: absolute;
             width: 200px;
             height: 200px;

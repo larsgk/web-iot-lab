@@ -2,12 +2,65 @@
 import { Demo3DObj } from './demo-3dobj.js';
 import { Thingy52Driver } from './thingy52-driver.js';
 
+const hexToRGB = hex => hex.match(/[A-Za-z0-9]{2}/g).map(v => parseInt(v, 16));
+
+const template = document.createElement('template');
+template.innerHTML = `
+<style>
+    :host {
+        font-family: UbuntuCondensed, Arial;
+    }
+
+    .flex-container {
+        display: flex;
+        height: 100%;
+    }
+    .content {
+        margin: auto;
+        position: relative;
+        width: 95%;
+        max-width: 700px;
+    }
+    .col {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .below {
+        border-radius: 10px;
+        background: #e0e0e0;
+        box-shadow: inset 5px 5px 10px #bebebe,
+                    inset -5px -5px 10px #ffffff;
+    }
+    #list {
+        display: grid;
+        grid-template-columns: 1fr 3fr;
+        // width: 600px;
+    }
+</style>
+
+<div class="flex-container">
+    <div class="content">
+        <div class="col">
+            <button id='connect'>CONNECT</button>
+            <h2>Status: <span id='status'> - </span></h2>
+            <div id='list'></div>
+            <input id='colorpicker' type='color'>
+            <demo-3dobj></demo-3dobj>
+        </div>
+    </div>
+</div>
+`;
+
 export class MainApp extends HTMLElement {
     /** @type {Demo3DObj} */ #obj
     #cells
 
     constructor() {
         super();
+
+        const shadowRoot = this.attachShadow({mode: 'open'});
+        shadowRoot.appendChild(template.content.cloneNode(true));
 
         this.#cells = [];
 
@@ -19,25 +72,9 @@ export class MainApp extends HTMLElement {
     }
 
     connectedCallback() {
-        this.innerHTML = `
-        <style>
-        #list {
-            display: grid;
-            grid-template-columns: 1fr 3fr;
-            width: 600px;
-        }
-
-        </style>
-
-        <button id='connect'>CONNECT</button>
-        <h2>Status: <span id='status'> - </span></h2>
-        <div id='list'></div>
-        <demo-3dobj></demo-3dobj>
-        `;
-
-
-        this.#obj = this.querySelector('demo-3dobj');
-        this.querySelector('#connect').addEventListener('click', this.doScan);
+        this.#obj = this.shadowRoot.querySelector('demo-3dobj');
+        this.shadowRoot.querySelector('#connect').addEventListener('click', this.doScan);
+        this.shadowRoot.querySelector('#colorpicker').addEventListener('input', this.setColor);
 
         this._initList();
 
@@ -57,8 +94,8 @@ export class MainApp extends HTMLElement {
     }
 
     _initList() {
-        const list = this.querySelector('#list');
-        const labels = ['X [B -/+]', 'Y [A +/-]', 'Z [A/B Red]', 'Temperature'];
+        const list = this.shadowRoot.querySelector('#list');
+        const labels = ['X', 'Y', 'Z', 'Temperature'];
 
         labels.forEach(l => {
             const label = document.createElement('span');
@@ -75,7 +112,7 @@ export class MainApp extends HTMLElement {
     }
 
     setStatus(str) {
-        this.querySelector('#status').innerHTML = str;
+        this.shadowRoot.querySelector('#status').innerHTML = str;
     }
 
     setCellValue(i, val) {
@@ -84,6 +121,11 @@ export class MainApp extends HTMLElement {
 
     doScan() {
         Thingy52Driver.scan();
+    }
+
+    setColor(evt) {
+        const hexcolor = evt.target.value;
+        Thingy52Driver.setLED(...hexToRGB(hexcolor));
     }
 
     handleAccelerometer(/** @type {CustomEvent} */ evt) {

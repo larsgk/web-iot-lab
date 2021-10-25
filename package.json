@@ -1,0 +1,21 @@
+{
+  "name": "web-iot-lab",
+  "version": "0.0.1",
+  "description": "Simple IoT web lab",
+  "main": "index.html",
+  "scripts": {
+    "start": "http-server . -c"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/larsgk/web-iot-lab.git"
+  },
+  "author": "Lars Gunder Knudsen",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/larsgk/web-iot-lab/issues"
+  },
+  "devDependencies": {
+    "http-server": "^14.0.0"
+  }
+}
