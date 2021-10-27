@@ -16,6 +16,7 @@ export const Thingy52Driver = new class extends EventTarget {
     constructor() {
         super();
 
+        this._onBatteryChange = this._onBatteryChange.bind(this);
         this._onThermometerChange = this._onThermometerChange.bind(this);
         this._onAccelerometerChange = this._onAccelerometerChange.bind(this);
         this._onButtonChange = this._onButtonChange.bind(this);
@@ -31,21 +32,23 @@ export const Thingy52Driver = new class extends EventTarget {
 
         device.ongattserverdisconnected = e => this._disconnected(e);
 
+        this.#device = device;
+        this.dispatchEvent(new CustomEvent('connect', {detail: { device }}));
+
         await this._startAccelerometerNotifications(server);
         await this._startThermometerNotifications(server);
         await this._startButtonClickNotifications(server);
 
+        // NOTE: There seem to be some issue with the latest firmware for reading battery as a standard service
+        // await this._startBatteryNotifications(server);
+
         this.#ledCharacteristic = await this._getLedCharacteristic(server);
 
         console.log('Opened device: ', device);
-
-        this.#device = device;
-        this.dispatchEvent(new CustomEvent('connect', {detail: { device }}));
     }
 
     _onAccelerometerChange(event) {
         const target = event.target;
-        const deviceId = target.service.device.id;
 
         const accel = {
           x: +target.value.getFloat32(0, true).toPrecision(5),
@@ -56,7 +59,6 @@ export const Thingy52Driver = new class extends EventTarget {
         this.dispatchEvent(new CustomEvent('accelerometer', {
             detail: accel
         }));
-
     }
 
     async _startAccelerometerNotifications(server) {
@@ -84,12 +86,38 @@ export const Thingy52Driver = new class extends EventTarget {
         return characteristic.startNotifications();
     }
 
+    _onBatteryChange(event) {
+        const target = event.target;
+        const deviceId = target.service.device.id;
+
+        const battery = target.value.getUint8(0);
+
+        this.dispatchEvent(new CustomEvent('battery', {
+            detail: { battery }
+        }));
+    }
+
+    async _startBatteryNotifications(server) {
+        const service = await server.getPrimaryService('battery_service');
+        const characteristic = await service.getCharacteristic('battery_level');
+
+        // Read and send initial value
+        const battery = await characteristic.readValue();
+        this.dispatchEvent(new CustomEvent('battery', {
+            detail: { battery }
+        }));
+
+        console.log(battery);
+        characteristic.addEventListener('characteristicvaluechanged', this._onBatteryChange);
+        return characteristic.startNotifications();
+    }
+
     _onThermometerChange(event) {
         const target = event.target;
-    
+
         const integer = target.value.getUint8(0);
         const decimal = target.value.getUint8(1);
-    
+
         const temperature = Number.parseFloat(`${integer}.${decimal}`);
 
         this.dispatchEvent(new CustomEvent('thermometer', {
@@ -112,7 +140,7 @@ export const Thingy52Driver = new class extends EventTarget {
         const service = await server.getPrimaryService('ef680300-9b35-4933-9b10-52ffa9740042');
         return await service.getCharacteristic('ef680301-9b35-4933-9b10-52ffa9740042');
     }
-    
+
     disconnect() {
         this.#device?.gatt?.disconnect();
         this.#device = undefined;
@@ -126,6 +154,7 @@ export const Thingy52Driver = new class extends EventTarget {
         const device = await navigator.bluetooth.requestDevice({
             filters: [{ services: ['ef680100-9b35-4933-9b10-52ffa9740042'] }],
             optionalServices: [
+                "battery_service",
                 "ef680200-9b35-4933-9b10-52ffa9740042",
                 "ef680300-9b35-4933-9b10-52ffa9740042",
                 "ef680400-9b35-4933-9b10-52ffa9740042",

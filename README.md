@@ -30,6 +30,10 @@ If you don't have one already, run `npm install` to get a simple http-server as 
 
 ## Components
 
+`demo-3dobj` - A simple 3D object that can be translated and rotated in 3D
+
+`info-box` - A box displaying a set list of properties and their (updated) values.
+
 ### Color box
 
 ### Display

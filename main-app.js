@@ -1,6 +1,7 @@
 // @ts-check
 import { Demo3DObj } from './demo-3dobj.js';
 import { Thingy52Driver } from './thingy52-driver.js';
+import { InfoBox } from './info-box.js';
 
 const hexToRGB = hex => hex.match(/[A-Za-z0-9]{2}/g).map(v => parseInt(v, 16));
 
@@ -32,10 +33,9 @@ template.innerHTML = `
         box-shadow: inset 5px 5px 10px #bebebe,
                     inset -5px -5px 10px #ffffff;
     }
-    #list {
-        display: grid;
-        grid-template-columns: 1fr 3fr;
-        // width: 600px;
+
+    button {
+        min-height: 40px;
     }
 </style>
 
@@ -44,7 +44,7 @@ template.innerHTML = `
         <div class="col">
             <button id='connect'>CONNECT</button>
             <h2>Status: <span id='status'> - </span></h2>
-            <div id='list'></div>
+            <info-box></info-box>
             <input id='colorpicker' type='color'>
             <demo-3dobj></demo-3dobj>
         </div>
@@ -54,15 +54,13 @@ template.innerHTML = `
 
 export class MainApp extends HTMLElement {
     /** @type {Demo3DObj} */ #obj
-    #cells
+    /** @type {InfoBox} */ #infobox
 
     constructor() {
         super();
 
         const shadowRoot = this.attachShadow({mode: 'open'});
         shadowRoot.appendChild(template.content.cloneNode(true));
-
-        this.#cells = [];
 
         this.handleButton = this.handleButton.bind(this);
         this.handleAccelerometer = this.handleAccelerometer.bind(this);
@@ -73,10 +71,11 @@ export class MainApp extends HTMLElement {
 
     connectedCallback() {
         this.#obj = this.shadowRoot.querySelector('demo-3dobj');
+        this.#infobox = this.shadowRoot.querySelector('info-box');
         this.shadowRoot.querySelector('#connect').addEventListener('click', this.doScan);
         this.shadowRoot.querySelector('#colorpicker').addEventListener('input', this.setColor);
 
-        this._initList();
+        this.#infobox.initList(['X', 'Y', 'Z', 'Temperature', 'Button']);
 
         Thingy52Driver.addEventListener('connect', this.handleConnect);
         Thingy52Driver.addEventListener('disconnect', this.handleDisconnect);
@@ -93,30 +92,9 @@ export class MainApp extends HTMLElement {
         Thingy52Driver.removeEventListener('button', this.handleButton);
     }
 
-    _initList() {
-        const list = this.shadowRoot.querySelector('#list');
-        const labels = ['X', 'Y', 'Z', 'Temperature'];
-
-        labels.forEach(l => {
-            const label = document.createElement('span');
-            label.classList.add('label');
-            label.innerText = l;
-
-            const value = document.createElement('span');
-            value.classList.add('value');
-            value.innerText = `-`;
-            this.#cells.push(value);
-
-            list.append(label, value);
-        });
-    }
 
     setStatus(str) {
         this.shadowRoot.querySelector('#status').innerHTML = str;
-    }
-
-    setCellValue(i, val) {
-        this.#cells[i].innerText = val;
     }
 
     doScan() {
@@ -131,19 +109,22 @@ export class MainApp extends HTMLElement {
     handleAccelerometer(/** @type {CustomEvent} */ evt) {
         const {x, y, z} = evt.detail;
         this.#obj.setTranslation(x*10, y*10, -z*10);
-        this.setCellValue(0, x);
-        this.setCellValue(1, y);
-        this.setCellValue(2, z);
+
+        this.#infobox.setValues({X:x, Y:y, Z:z});
     }
 
     handleThermometer(/** @type {CustomEvent} */ evt) {
         const {temperature} = evt.detail;
-        this.setCellValue(3, `${temperature}°C`);
+
+        this.#infobox.setValues({Temperature:`${temperature}°C`});
     }
 
     handleButton(/** @type {CustomEvent} */ evt) {
         const {pressed} = evt.detail;
+
         Thingy52Driver.setLED(pressed ? 255 : 0, pressed ? 0 : 255, 0);
+
+        this.#infobox.setValues({Button:`${pressed ? "DOWN" : "UP"}`});
     }
 
     handleConnect(/** @type {CustomEvent} */ evt) {
