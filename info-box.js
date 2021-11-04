@@ -29,6 +29,7 @@ export class InfoBox extends HTMLElement {
 
     // Initialize the info box with a list of property labels (e.g. ['A', 'B', 'C'])
     initList(labels) {
+        this.#cells.clear();
         const str = labels.map(l => `<span class='label'>${l}</span><span id=${l} class='value'>-</span>`);
         this.#list.innerHTML = str.join('') || '';
         for (const l of labels) {
