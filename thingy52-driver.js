@@ -42,7 +42,9 @@ export const Thingy52Driver = new class extends EventTarget {
         // NOTE: On Linux/BlueZ, there might be an issue with 16bit IDs
         try {
             await this._startBatteryNotifications(server);
-        } catch(err) {}
+        } catch(err) {
+            console.log("Error with battery service: ", err);
+        }
 
         this.#ledCharacteristic = await this._getLedCharacteristic(server);
 
