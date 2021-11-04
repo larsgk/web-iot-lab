@@ -63,6 +63,7 @@ export class MainApp extends HTMLElement {
         shadowRoot.appendChild(template.content.cloneNode(true));
 
         this.handleButton = this.handleButton.bind(this);
+        this.handleBattery = this.handleBattery.bind(this);
         this.handleAccelerometer = this.handleAccelerometer.bind(this);
         this.handleThermometer = this.handleThermometer.bind(this);
         this.handleConnect = this.handleConnect.bind(this);
@@ -75,13 +76,14 @@ export class MainApp extends HTMLElement {
         this.shadowRoot.querySelector('#connect').addEventListener('click', this.doScan);
         this.shadowRoot.querySelector('#colorpicker').addEventListener('input', this.setColor);
 
-        this.#infobox.initList(['X', 'Y', 'Z', 'Temperature', 'Button']);
+        this.#infobox.initList(['X', 'Y', 'Z', 'Temperature', 'Button', 'Battery']);
 
         Thingy52Driver.addEventListener('connect', this.handleConnect);
         Thingy52Driver.addEventListener('disconnect', this.handleDisconnect);
         Thingy52Driver.addEventListener('accelerometer', this.handleAccelerometer);
         Thingy52Driver.addEventListener('thermometer', this.handleThermometer);
         Thingy52Driver.addEventListener('button', this.handleButton);
+        Thingy52Driver.addEventListener('battery', this.handleBattery);
     }
 
     disconnectedCallback() {
@@ -90,6 +92,7 @@ export class MainApp extends HTMLElement {
         Thingy52Driver.removeEventListener('accelerometer', this.handleAccelerometer);
         Thingy52Driver.removeEventListener('thermometer', this.handleThermometer);
         Thingy52Driver.removeEventListener('button', this.handleButton);
+        Thingy52Driver.removeEventListener('battery', this.handleBattery);
     }
 
 
@@ -125,6 +128,12 @@ export class MainApp extends HTMLElement {
         Thingy52Driver.setLED(pressed ? 255 : 0, pressed ? 0 : 255, 0);
 
         this.#infobox.setValues({Button:`${pressed ? "DOWN" : "UP"}`});
+    }
+
+    handleBattery(/** @type {CustomEvent} */ evt) {
+        const {battery} = evt.detail;
+
+        this.#infobox.setValues({Battery:`${battery}%`});
     }
 
     handleConnect(/** @type {CustomEvent} */ evt) {

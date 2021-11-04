@@ -39,8 +39,10 @@ export const Thingy52Driver = new class extends EventTarget {
         await this._startThermometerNotifications(server);
         await this._startButtonClickNotifications(server);
 
-        // NOTE: There seem to be some issue with the latest firmware for reading battery as a standard service
-        // await this._startBatteryNotifications(server);
+        // NOTE: On Linux/BlueZ, there might be an issue with 16bit IDs
+        try {
+            await this._startBatteryNotifications(server);
+        } catch(err) {}
 
         this.#ledCharacteristic = await this._getLedCharacteristic(server);
 
@@ -102,12 +104,11 @@ export const Thingy52Driver = new class extends EventTarget {
         const characteristic = await service.getCharacteristic('battery_level');
 
         // Read and send initial value
-        const battery = await characteristic.readValue();
+        const battery = (await characteristic.readValue()).getUint8(0);
         this.dispatchEvent(new CustomEvent('battery', {
             detail: { battery }
         }));
 
-        console.log(battery);
         characteristic.addEventListener('characteristicvaluechanged', this._onBatteryChange);
         return characteristic.startNotifications();
     }
