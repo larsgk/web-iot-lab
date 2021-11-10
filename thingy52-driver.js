@@ -35,6 +35,7 @@ export const Thingy52Driver = new class extends EventTarget {
         this.#device = device;
         this.dispatchEvent(new CustomEvent('connect', {detail: { device }}));
 
+        // Initialize and listen for changes to accelerometerm thermometer and button
         await this._startAccelerometerNotifications(server);
         await this._startThermometerNotifications(server);
         await this._startButtonClickNotifications(server);

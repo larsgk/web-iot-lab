@@ -42,7 +42,7 @@ export class InfoBox extends HTMLElement {
     // NOTE: Only properties given to`initList` will be shown.
     setValues(values) {
         for (const label in values) {
-            if (this.#cells.has(label)) this.#cells.get(label).innerText = values[label];
+            if (this.#cells.has(label)) this.#cells.get(label).textContent = values[label];
         }
     }
 
