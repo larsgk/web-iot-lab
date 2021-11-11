@@ -4,7 +4,7 @@
   "description": "Simple IoT web lab",
   "main": "index.html",
   "scripts": {
-    "start": "http-server . -c"
+    "start": "http-server . -c-1"
   },
   "repository": {
     "type": "git",
